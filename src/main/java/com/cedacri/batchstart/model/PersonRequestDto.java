@@ -1,7 +1,6 @@
-package com.cedacri.demo.model;
+package com.cedacri.batchstart.model;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 public class PersonRequestDto {
 

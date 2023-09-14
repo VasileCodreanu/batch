@@ -1,4 +1,4 @@
-package com.cedacri.demo;
+package com.cedacri.batchstart;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

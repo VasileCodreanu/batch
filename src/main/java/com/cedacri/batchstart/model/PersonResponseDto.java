@@ -1,13 +1,23 @@
-package com.cedacri.demo.model;
+package com.cedacri.batchstart.model;
 
 public class PersonResponseDto {
 
+    private Long id;
     private String lastName;
     private String firstName;
 
-    public PersonResponseDto(String lastName, String firstName) {
+    public PersonResponseDto(Long id, String lastName, String firstName) {
+        this.id = id;
         this.lastName = lastName;
         this.firstName = firstName;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getLastName() {

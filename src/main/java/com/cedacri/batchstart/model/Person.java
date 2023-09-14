@@ -1,4 +1,4 @@
-package com.cedacri.demo.model;
+package com.cedacri.batchstart.model;
 
 public class Person {
 

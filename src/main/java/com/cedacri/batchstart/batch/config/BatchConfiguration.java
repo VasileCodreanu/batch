@@ -1,19 +1,24 @@
-package com.cedacri.demo;
+package com.cedacri.batchstart.batch.config;
 
-import com.cedacri.demo.model.Person;
-import com.cedacri.demo.model.PersonRequestDto;
+import com.cedacri.batchstart.batch.job.JobCompletionNotificationListener;
+import com.cedacri.batchstart.batch.job.processors.DtoToPersonItemProcessor;
+import com.cedacri.batchstart.batch.job.processors.PersonValidator;
+import com.cedacri.batchstart.model.Person;
+import com.cedacri.batchstart.model.PersonRequestDto;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.batch.item.validator.ValidatingItemProcessor;
 import org.springframework.context.annotation.Bean;
@@ -22,17 +27,19 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.List;
 
 //To configure your job, you must first create a Spring @Configuration
 @Configuration
 public class BatchConfiguration {
-    // ItemReader
+
     @Bean
     public FlatFileItemReader<PersonRequestDto> reader() {
         return new FlatFileItemReaderBuilder<PersonRequestDto>()
                 .name("personItemReader")
                 .resource(new ClassPathResource("sample-data.csv"))
-                .delimited()////DelimitedLineTokenizer defaults to comma as its delimiter
+                .delimited()//DelimitedLineTokenizer defaults to comma as its delimiter
                 .names(new String[]{"firstName", "lastName"})
 //                .linesToSkip(1)
                 .fieldSetMapper(new BeanWrapperFieldSetMapper<PersonRequestDto>() {{
@@ -41,23 +48,45 @@ public class BatchConfiguration {
                 .build();
     }
 
+    //validate items annotated with the Bean Validation API (JSR-303) annotations
     @Bean
-    ValidatingItemProcessor<PersonRequestDto> validatingItemProcessor(){
-//        allows you to validate items annotated with the Bean Validation API (JSR-303) annotations
+    BeanValidatingItemProcessor<PersonRequestDto> validatingJSR303Processor() {
         BeanValidatingItemProcessor<PersonRequestDto> itemProcessor = new BeanValidatingItemProcessor<>();
-        itemProcessor.setValidator(new PersonValidator());
+        itemProcessor.setFilter(true);// to skip the invalid items
+        //setFilter(false); //throw ValidationException, whenever it finds an item that do not meet validation criteria. It leads to entire job in FAILED state.
+        return itemProcessor;
+    }
+
+
+    //ValidatingItemProcessor is used to validate the input and return without any modification.
+    // Using this processor either we can skip the item if it does not meet the validation criteria or fail the job.
+    @Bean
+    public ValidatingItemProcessor<PersonRequestDto> validatingCustomItemProcessor() {
+        ValidatingItemProcessor<PersonRequestDto> itemProcessor = new ValidatingItemProcessor<>(new PersonValidator());
+
         itemProcessor.setFilter(true);
         return itemProcessor;
     }
 
-    //processor
     @Bean
-    public PersonItemProcessor processor() {
-        return new PersonItemProcessor();
+    public DtoToPersonItemProcessor dtoToEntityProcessor() {
+        return new DtoToPersonItemProcessor();
     }
-    // creates an ItemWriter
-    //This one is aimed at a JDBC destination and automatically gets a copy of the dataSource created by @EnableBatchProcessing.
-    // It includes the SQL statement needed to insert a single Person, driven by Java bean properties.
+
+    @Bean
+    public CompositeItemProcessor compositeProcessor() throws Exception {
+        List<ItemProcessor> delegates = new ArrayList<>(3);
+        delegates.add(validatingJSR303Processor());
+        delegates.add(validatingCustomItemProcessor());
+        delegates.add(dtoToEntityProcessor());
+
+        CompositeItemProcessor processor = new CompositeItemProcessor();
+        processor.setDelegates(delegates);
+        processor.afterPropertiesSet();
+        return processor;
+    }
+
+
     @Bean
     public JdbcBatchItemWriter<Person> writer(DataSource dataSource) {
         return new JdbcBatchItemWriterBuilder<Person>()
@@ -67,34 +96,29 @@ public class BatchConfiguration {
                 .build();
     }
 
-    //next is actual job configuration:
-    // The first method defines the job, and the second one defines a single step.
-    // Jobs are built from steps, where each step can involve a reader, a processor,
-    // and a writer.
+    // Jobs are built from steps, where each step can involve a reader, a processor, and a writer.
     //A job needs to be launched (with JobLauncher), and metadata about the currently running process needs to be stored (in JobRepository).
     @Bean
-    public Job importUserJob(JobRepository jobRepository,
+    public Job importPersonJob(JobRepository jobRepository,
                              JobCompletionNotificationListener listener,
-                             Step csvToDb) {
-        return new JobBuilder("importUserJob", jobRepository)
+                             Step csvToDbStep) {
+        return new JobBuilder("importPersonJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
-                .flow(csvToDb)
-//                .next(step2)//for multiple steps
+                .flow(csvToDbStep)
                 .end()
                 .build();
     }
 
-    //actual job configuration
     @Bean
-    public Step csvToDb(JobRepository jobRepository,
-                      PlatformTransactionManager transactionManager,
-                      JdbcBatchItemWriter<Person> writer) {
+    public Step csvToDbStep(JobRepository jobRepository,
+                            PlatformTransactionManager transactionManager,
+                            JdbcBatchItemWriter<Person> writer) throws Exception {
         return new StepBuilder("csvToDb", jobRepository)
                 .<PersonRequestDto, Person> chunk(2, transactionManager)
                 // generic method. This represents the input and output types of each “chunk” of processing and lines up with ItemReader<Person> and ItemWriter<Person>.
                 .reader(reader())
-                .processor(processor())
+                .processor(compositeProcessor())
                 .writer(writer)
                 .build();
     }

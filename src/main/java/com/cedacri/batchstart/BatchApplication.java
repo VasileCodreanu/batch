@@ -1,4 +1,4 @@
-package com.cedacri.demo;
+package com.cedacri.batchstart;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

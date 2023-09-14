@@ -1,6 +1,6 @@
-package com.cedacri.demo;
+package com.cedacri.batchstart.batch.job;
 
-import com.cedacri.demo.model.Person;
+import com.cedacri.batchstart.model.Person;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.BatchStatus;
@@ -10,15 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-//onfiguration is a way to get notified when the job completes
 // listens for when a job is BatchStatus.COMPLETED and then uses JdbcTemplate to inspect the results.
 @Component
 public class JobCompletionNotificationListener implements JobExecutionListener {
     private static final Logger log = LoggerFactory.getLogger(JobCompletionNotificationListener.class);
-
     private final JdbcTemplate jdbcTemplate;
 
-    // a way to get notified when the job completes
     @Autowired
     public JobCompletionNotificationListener(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;

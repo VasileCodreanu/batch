@@ -1,4 +1,4 @@
-package com.cedacri.batchstart.batch.job;
+package com.cedacri.batchstart.batch.job.listener;
 
 import com.cedacri.batchstart.model.Person;
 import org.slf4j.Logger;
@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-// listens for when a job is BatchStatus.COMPLETED and then uses JdbcTemplate to inspect the results.
 @Component
 public class JobCompletionNotificationListener implements JobExecutionListener {
     private static final Logger log = LoggerFactory.getLogger(JobCompletionNotificationListener.class);
@@ -24,7 +23,7 @@ public class JobCompletionNotificationListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution jobExecution) {
         if(jobExecution.getStatus() == BatchStatus.COMPLETED) {
-            log.info("!!! JOB FINISHED! Time to verify the results");
+            log.info("!!! - - JOB FINISHED! Time to verify the results");
 
             // uses JdbcTemplate to inspect the results
             jdbcTemplate.query("SELECT first_name, last_name FROM people",

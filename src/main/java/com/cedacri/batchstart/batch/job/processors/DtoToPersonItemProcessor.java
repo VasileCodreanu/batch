@@ -19,7 +19,7 @@ public class DtoToPersonItemProcessor implements ItemProcessor<PersonRequestDto,
 
         if (    NAMES_TO_BE_EXCLUDED.contains(personDto.getFirstName()) ||
                 NAMES_TO_BE_EXCLUDED.contains(personDto.getLastName())) {
-            log.info("NAMES_TO_BE_EXCLUDED found (" + personDto + ')' + " DtoToPersonItemProcessor.class");
+            log.warn("!!! - - NAMES_TO_BE_EXCLUDED found (" + personDto + ')' + " DtoToPersonItemProcessor.class");
             return null;//to be skipped
         }
 

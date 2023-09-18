@@ -2,6 +2,7 @@ package com.cedacri.batchstart.batch.job.processors;
 
 import com.cedacri.batchstart.model.Person;
 import com.cedacri.batchstart.model.PersonRequestDto;
+import jakarta.validation.ValidationException;
 import org.springframework.batch.item.ItemProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,8 @@ public class DtoToPersonItemProcessor implements ItemProcessor<PersonRequestDto,
         if (    NAMES_TO_BE_EXCLUDED.contains(personDto.getFirstName()) ||
                 NAMES_TO_BE_EXCLUDED.contains(personDto.getLastName())) {
             log.warn("!!! - - NAMES_TO_BE_EXCLUDED found (" + personDto + ')' + " DtoToPersonItemProcessor.class");
-            return null;//to be skipped
+            throw new ValidationException("------ DATA NOT VALID in DtoToPersonItemProcessor -> skip");
+//            return null;//to be skipped
         }
 
         final String firstName = personDto.getFirstName().toUpperCase();

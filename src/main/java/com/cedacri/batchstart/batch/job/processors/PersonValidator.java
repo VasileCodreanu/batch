@@ -15,11 +15,11 @@ public class PersonValidator implements Validator<PersonRequestDto> {
 
     @Override
     public void validate(PersonRequestDto dto) throws ValidationException {
-
         if (    NAMES_TO_BE_EXCLUDED.contains(dto.getFirstName()) ||
                 NAMES_TO_BE_EXCLUDED.contains(dto.getLastName())) {
             log.warn("!!! - - NAMES_TO_BE_EXCLUDED found (" + dto + ')' + " PersonValidator.class");
-            throw new ValidationException("Jane ->  DATA NOT VALID in PersonValidator -> skip");
+            //save to some other file
+            throw new ValidationException("------Jane ->  DATA NOT VALID in PersonValidator -> skip");
         }
     }
 }

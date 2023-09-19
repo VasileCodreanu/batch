@@ -1,5 +1,7 @@
 package com.cedacri.batchstart.batch.config;
 
+import com.cedacri.batchstart.batch.job.InvalidDataStep.InvalidDataReader;
+import com.cedacri.batchstart.batch.job.InvalidDataStep.StringHeaderWriter;
 import com.cedacri.batchstart.batch.job.listener.JobCompletionNotificationListener;
 import com.cedacri.batchstart.batch.job.processors.DtoToPersonItemProcessor;
 import com.cedacri.batchstart.batch.job.processors.PersonValidator;
@@ -14,12 +16,19 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
+import org.springframework.batch.item.file.transform.FieldExtractor;
+import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.batch.item.support.CompositeItemProcessor;
 import org.springframework.batch.item.validator.BeanValidatingItemProcessor;
 import org.springframework.batch.item.validator.SpringValidator;
@@ -28,7 +37,11 @@ import org.springframework.batch.item.validator.ValidationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.WritableResource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.validation.Validator;
 
@@ -49,7 +62,6 @@ public class BatchConfiguration {
                 .resource(new ClassPathResource(inputFileName))
                 .delimited()//DelimitedLineTokenizer defaults to comma as its delimiter
                 .names(new String[]{"firstName", "lastName"})
-//                .linesToSkip(1)
                 .fieldSetMapper(new BeanWrapperFieldSetMapper<PersonRequestDto>() {{
                     setTargetType(PersonRequestDto.class);
                 }})
@@ -59,15 +71,12 @@ public class BatchConfiguration {
     @Bean
     BeanValidatingItemProcessor<PersonRequestDto> validatingJSR303Processor() throws Exception {
         BeanValidatingItemProcessor<PersonRequestDto> itemProcessor = new BeanValidatingItemProcessor<>();
-        itemProcessor.setFilter(true);// to skip the invalid items ,  items that fail validation are filtered (null is returned).
+        itemProcessor.setFilter(false);// to skip the invalid items ,  items that fail validation are filtered (null is returned).
         //setFilter(false); //throw ValidationException, whenever it finds an item that do not meet validation criteria. It leads to entire job in FAILED state.
         itemProcessor.afterPropertiesSet();
 
         return itemProcessor;
-        //BeanValidatingItemProcessor<T> extends ValidatingItemProcessor<T>
-        //A ValidatingItemProcessor that uses the Bean Validation API (JSR-303) to validate items.
     }
-
 
     //ValidatingItemProcessor is used to validate the input and return without any modification.
     // Using this processor either we can skip the item if it does not meet the validation criteria or fail the job.
@@ -113,12 +122,15 @@ public class BatchConfiguration {
     @Bean
     public Job importPersonJob(JobRepository jobRepository,
                              JobCompletionNotificationListener listener,
-                             Step csvToDbStep, Step moveFilesStep) {
+                               Step csvToDbStep,
+                               Step moveFilesStep,
+                               Step writeInvalidDataStep) {
         return new JobBuilder("importPersonJob", jobRepository)
                 .incrementer(new RunIdIncrementer())
                 .listener(listener)
                 .flow(csvToDbStep)
                 .next(moveFilesStep)
+                .next(writeInvalidDataStep)
                 .end()
                 .build();
     }
@@ -138,11 +150,10 @@ public class BatchConfiguration {
                 .skip(Exception.class)
                 .skipLimit(12)
 
-                .listener(new MySkipListener())
+//                .listener(new MySkipListener())
                 .listener(new StepItemProcessListener())
                 .listener(new StepItemWriteListener())
                 .listener(new StepItemReadListener())
-                .listener(new StepChunkListener())
 
                 .build();
     }
@@ -154,7 +165,58 @@ public class BatchConfiguration {
             MoveFilesTasklet moveFilesTasklet) {
         return new StepBuilder("moveFilesStep", jobRepository)
                 .tasklet(moveFilesTasklet, transactionManager)
-                .listener(new MyStepListener())
                 .build();
+    }
+
+    @Bean
+    public Step writeInvalidDataStep(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager) {
+        return new StepBuilder("writeInvalidDataStep", jobRepository)
+                .<PersonRequestDto, PersonRequestDto> chunk(2, transactionManager)
+                .reader(invalidDataReader())
+                .writer(invalidDataWriter())
+                .build();
+    }
+
+    @Bean
+    public ItemReader<PersonRequestDto> invalidDataReader() {
+        return new InvalidDataReader();
+    }
+
+    @Bean
+    public ItemWriter<PersonRequestDto> invalidDataWriter() {
+//        String exportFilePath = environment.getRequiredProperty("src/main/resources/invalid.csv");
+//        WritableResource exportFileResource = new FileSystemResource(exportFilePath);
+
+//        String exportFileHeader = environment.getRequiredProperty("src/main/resources/invalid.csv");
+//        StringHeaderWriter headerWriter = new StringHeaderWriter(exportFileHeader);
+
+
+        return new FlatFileItemWriterBuilder<PersonRequestDto>()
+                .name("invalidDataWriter")
+//                .headerCallback(headerWriter)
+                .lineAggregator( createStudentLineAggregator() )
+                .resource( new FileSystemResource("src/main/resources/invalid.csv") )
+                .build();
+    }
+
+    private FieldExtractor<PersonRequestDto> createStudentFieldExtractor() {
+        BeanWrapperFieldExtractor<PersonRequestDto> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(new String[] {
+                "firstName", "lastName"
+        });
+        return extractor;
+    }
+
+    private LineAggregator<PersonRequestDto> createStudentLineAggregator() {
+        DelimitedLineAggregator<PersonRequestDto> lineAggregator =
+                new DelimitedLineAggregator<>();
+        lineAggregator.setDelimiter(";");
+
+        FieldExtractor<PersonRequestDto> fieldExtractor = createStudentFieldExtractor();
+        lineAggregator.setFieldExtractor(fieldExtractor);
+
+        return lineAggregator;
     }
 }

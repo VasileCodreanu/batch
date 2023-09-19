@@ -1,11 +1,9 @@
 package com.cedacri.batchstart.model;
 
 public class Person {
-
-    private Long id;
-
-    private String lastName;
     private String firstName;
+    private String lastName;
+
 
     public Person() {
     }

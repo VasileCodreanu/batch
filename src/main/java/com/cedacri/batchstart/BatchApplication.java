@@ -14,5 +14,4 @@ public class BatchApplication {
 		// SpringApplication.exit() and System.exit() ensure that the JVM exits upon job completion
 		System.exit(SpringApplication.exit(SpringApplication.run(BatchApplication.class, args)));
 	}
-
 }

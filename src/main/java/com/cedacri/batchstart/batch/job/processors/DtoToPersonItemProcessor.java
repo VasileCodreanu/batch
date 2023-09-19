@@ -13,17 +13,9 @@ import java.util.List;
 public class DtoToPersonItemProcessor implements ItemProcessor<PersonRequestDto, Person> {
 
     private static final Logger log = LoggerFactory.getLogger(DtoToPersonItemProcessor.class);
-    private static final List<String> NAMES_TO_BE_EXCLUDED = Arrays.asList("Tom", "Jerry", "Justin");
 
     @Override
     public Person process(final PersonRequestDto personDto) {
-
-        if (    NAMES_TO_BE_EXCLUDED.contains(personDto.getFirstName()) ||
-                NAMES_TO_BE_EXCLUDED.contains(personDto.getLastName())) {
-            log.warn("!!! - - NAMES_TO_BE_EXCLUDED found (" + personDto + ')' + " DtoToPersonItemProcessor.class");
-            throw new ValidationException("------ DATA NOT VALID in DtoToPersonItemProcessor -> skip");
-//            return null;//to be skipped
-        }
 
         final String firstName = personDto.getFirstName().toUpperCase();
         final String lastName  = personDto.getLastName().toUpperCase();

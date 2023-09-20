@@ -23,7 +23,6 @@ public class DtoToPersonItemProcessor implements ItemProcessor<PersonRequestDto,
         final Person transformedPerson = new Person(firstName, lastName);
 
         log.info("CONVERTING (" + personDto + ") into (" + transformedPerson + ")");
-
         return transformedPerson;
     }
 }

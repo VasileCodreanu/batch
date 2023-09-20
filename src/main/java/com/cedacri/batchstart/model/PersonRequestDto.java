@@ -9,7 +9,7 @@ public class PersonRequestDto {
     @NotEmpty(message = "lastName can not be empty")
     private String lastName;
     @NotEmpty(message = "firstName can not be empty")
-    @Size(min = 2, max = 20, message = "firstName Me must be between 2 and 20 characters")
+    @Size(min = 2, max = 20, message = "firstName must be between 2 and 20 characters")
     private String firstName;
 
     public PersonRequestDto() {

@@ -9,8 +9,8 @@ import org.springframework.batch.item.validator.Validator;
 import java.util.Arrays;
 import java.util.List;
 
-public class PersonValidator implements Validator<PersonRequestDto> {
-    private static final Logger log = LoggerFactory.getLogger(PersonValidator.class);
+public class CustomPersonValidator implements Validator<PersonRequestDto> {
+    private static final Logger log = LoggerFactory.getLogger(CustomPersonValidator.class);
     private static final List<String> NAMES_TO_BE_EXCLUDED = Arrays.asList("Tom", "Jerry", "Jane");
 
     @Override
@@ -18,8 +18,7 @@ public class PersonValidator implements Validator<PersonRequestDto> {
         if (    NAMES_TO_BE_EXCLUDED.contains(dto.getFirstName()) ||
                 NAMES_TO_BE_EXCLUDED.contains(dto.getLastName())) {
             log.warn("!!! - - NAMES_TO_BE_EXCLUDED found (" + dto + ')' + " PersonValidator.class");
-            //save to some other file
-            throw new ValidationException("------Jane ->  DATA NOT VALID in PersonValidator -> skip");
+            throw new ValidationException("FirstName or LastName should not be equal 'Jane': " + dto);
         }
     }
 }

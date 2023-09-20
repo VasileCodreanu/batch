@@ -9,13 +9,13 @@ import org.springframework.batch.item.UnexpectedInputException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InvalidDataReader implements ItemReader<PersonRequestDto> {
+public class InvalidDataReader implements ItemReader<InvalidPersonRequestDto> {
 
     private int nextIndex;
-    List<PersonRequestDto> invalidData;
+    static List<InvalidPersonRequestDto> invalidData;
 
-    public void setInvalidData(PersonRequestDto invalidItem) {
-        this.invalidData.add(invalidItem);
+    public void setInvalidData(PersonRequestDto invalidItem, Exception error) {
+        this.invalidData.add(new InvalidPersonRequestDto(invalidItem.getFirstName(), invalidItem.getLastName(), error.getMessage()));
     }
 
     public InvalidDataReader() {
@@ -24,14 +24,13 @@ public class InvalidDataReader implements ItemReader<PersonRequestDto> {
     }
 
     @Override
-    public PersonRequestDto read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public InvalidPersonRequestDto read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
 
-        PersonRequestDto next = null;
+        InvalidPersonRequestDto next = null;
 
         if (nextIndex < invalidData.size()) {
             next = invalidData.get(nextIndex++);
-        }
-        else{
+        }else{
             nextIndex = 0;
         }
         return next;

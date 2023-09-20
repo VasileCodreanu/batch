@@ -12,7 +12,6 @@ import java.util.List;
 @Component
 public class StepItemProcessListener implements ItemProcessListener<PersonRequestDto, Person> {
 
-//    private final List<PersonRequestDto> invalidData = new LinkedList<>();
     InvalidDataReader invalidDataReader;
 
     public StepItemProcessListener() {
@@ -30,10 +29,8 @@ public class StepItemProcessListener implements ItemProcessListener<PersonReques
     }
 
     @Override
-    public void onProcessError(PersonRequestDto item, Exception e) {
-        //add this not valida data to customecsv out[ut | new database table
-        invalidDataReader.setInvalidData(item);
-//        invalidData.add(item);
-        System.out.println(" - ----------StepItemProcessListener - ----- onProcessError--"+ e.getMessage());
+    public void onProcessError(PersonRequestDto item, Exception error) {
+        invalidDataReader.setInvalidData(item, error);
+        System.out.println(" - ----------StepItemProcessListener - ----- onProcessError--"+ error.getMessage());
     }
 }

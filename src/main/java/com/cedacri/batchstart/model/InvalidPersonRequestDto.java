@@ -1,4 +1,4 @@
-package com.cedacri.batchstart.batch.job.InvalidDataStep;
+package com.cedacri.batchstart.model;
 
 public class InvalidPersonRequestDto {
     private String firstName;

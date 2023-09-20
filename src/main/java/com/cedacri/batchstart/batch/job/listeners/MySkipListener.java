@@ -1,4 +1,4 @@
-package com.cedacri.batchstart.batch.listeners;
+package com.cedacri.batchstart.batch.job.listeners;
 
 import com.cedacri.batchstart.model.Person;
 import com.cedacri.batchstart.model.PersonRequestDto;

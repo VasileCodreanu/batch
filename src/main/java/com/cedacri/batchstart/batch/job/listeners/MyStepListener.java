@@ -1,4 +1,4 @@
-package com.cedacri.batchstart.batch.listeners;
+package com.cedacri.batchstart.batch.job.listeners;
 
 import org.springframework.batch.core.StepExecutionListener;
 

@@ -1,4 +1,4 @@
-package com.cedacri.batchstart.batch.job.processors;
+package com.cedacri.batchstart.batch.job.csvToDbStep.processors;
 
 import com.cedacri.batchstart.model.PersonRequestDto;
 import org.slf4j.Logger;
@@ -18,7 +18,7 @@ public class CustomPersonValidator implements Validator<PersonRequestDto> {
         if (    NAMES_TO_BE_EXCLUDED.contains(dto.getFirstName()) ||
                 NAMES_TO_BE_EXCLUDED.contains(dto.getLastName())) {
             log.warn("!!! - - NAMES_TO_BE_EXCLUDED found (" + dto + ')' + " PersonValidator.class");
-            throw new ValidationException("FirstName or LastName should not be equal 'Jane': " + dto);
+            throw new ValidationException("Validation failed for "+ dto+ ": Field error: firstName or lastName should not be equal 'Jane'");
         }
     }
 }

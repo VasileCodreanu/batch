@@ -1,4 +1,4 @@
-package com.cedacri.batchstart.batch.job.listener;
+package com.cedacri.batchstart.batch.job.listeners;
 
 import com.cedacri.batchstart.model.Person;
 import org.slf4j.Logger;

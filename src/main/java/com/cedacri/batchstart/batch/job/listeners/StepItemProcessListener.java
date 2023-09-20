@@ -1,13 +1,10 @@
-package com.cedacri.batchstart.batch.listeners;
+package com.cedacri.batchstart.batch.job.listeners;
 
-import com.cedacri.batchstart.batch.job.InvalidDataStep.InvalidDataReader;
+import com.cedacri.batchstart.batch.job.writeIntoCsvInvalidDataStep.InvalidDataReader;
 import com.cedacri.batchstart.model.Person;
 import com.cedacri.batchstart.model.PersonRequestDto;
 import org.springframework.batch.core.ItemProcessListener;
 import org.springframework.stereotype.Component;
-
-import java.util.LinkedList;
-import java.util.List;
 
 @Component
 public class StepItemProcessListener implements ItemProcessListener<PersonRequestDto, Person> {

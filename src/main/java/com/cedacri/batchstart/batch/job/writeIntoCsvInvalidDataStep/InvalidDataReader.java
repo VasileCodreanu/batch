@@ -1,21 +1,24 @@
-package com.cedacri.batchstart.batch.job.InvalidDataStep;
+package com.cedacri.batchstart.batch.job.writeIntoCsvInvalidDataStep;
 
+import com.cedacri.batchstart.model.InvalidPersonRequestDto;
 import com.cedacri.batchstart.model.PersonRequestDto;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.NonTransientResourceException;
 import org.springframework.batch.item.ParseException;
 import org.springframework.batch.item.UnexpectedInputException;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Component
 public class InvalidDataReader implements ItemReader<InvalidPersonRequestDto> {
 
     private int nextIndex;
     static List<InvalidPersonRequestDto> invalidData;
 
     public void setInvalidData(PersonRequestDto invalidItem, Exception error) {
-        this.invalidData.add(new InvalidPersonRequestDto(invalidItem.getFirstName(), invalidItem.getLastName(), error.getMessage()));
+        this.invalidData.add(new InvalidPersonRequestDto(invalidItem.getFirstName(), invalidItem.getLastName(), error.getMessage().trim()));
     }
 
     public InvalidDataReader() {
